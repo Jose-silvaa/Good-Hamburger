@@ -12,5 +12,4 @@ public enum TipoProduto
 {
     Sanduiche,
     Acompanhamento,
-    Bebida
 }
