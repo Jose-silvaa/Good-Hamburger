@@ -6,6 +6,6 @@ public interface IProdutoService
 {
     Task CriarProduto(CriarProdutoDto produtoDto);
     
-    Task DeletarProduto(int id);
+    Task <IEnumerable<ProdutoDto>> ObterTodosProdutos();
     
 }

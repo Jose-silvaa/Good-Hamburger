@@ -2,6 +2,8 @@
 using GoodHamburger.Features.Produtos.Dtos;
 using GoodHamburger.Features.Produtos.Interfaces;
 using GoodHamburger.Features.Produtos.Models;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace GoodHamburger.Features.Produtos.Services;
 
@@ -27,8 +29,15 @@ public class ProdutoService : IProdutoService
         await _context.SaveChangesAsync();
     }
 
-    public Task DeletarProduto(int id)
+    public async Task<IEnumerable<ProdutoDto>> ObterTodosProdutos()
     {
-        throw new NotImplementedException();
+        return await _context.Produtos
+            .Select(p => new ProdutoDto(
+                p.Id,
+                p.Nome,
+                p.Preco,
+                p.Tipo
+            ))
+            .ToListAsync();
     }
 }

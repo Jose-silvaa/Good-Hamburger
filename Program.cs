@@ -1,9 +1,14 @@
 using GoodHamburger.Components;
 using GoodHamburger.Data;
+using GoodHamburger.Features.Produtos.Interfaces;
+using GoodHamburger.Features.Produtos.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<IProdutoService, ProdutoService>();
 builder.Services.AddControllers();  
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -13,6 +18,11 @@ builder.Services.AddHttpClient("Api", c =>
 {
     c.BaseAddress = new Uri("https://localhost:5097"); 
 });
+
+builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
+    p.WithOrigins("http://localhost:5097")
+        .AllowAnyHeader()
+        .AllowAnyMethod()));
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
@@ -30,7 +40,12 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+app.UseSwagger();
+app.UseSwaggerUI(options =>
+{
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "System Support Ticket");
+    options.RoutePrefix = "swagger"; 
+});
 
 app.UseAntiforgery();
 

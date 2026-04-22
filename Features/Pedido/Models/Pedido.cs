@@ -29,11 +29,6 @@ public class Pedido
                 if(Acompanhamento is not null)
                     Acompanhamento = produto;
                 break;
-            
-            case TipoProduto.Bebida:
-                if (Bebida is not null);
-                    Bebida = produto;
-                break;
         }
     }
 

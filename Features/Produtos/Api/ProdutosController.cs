@@ -1,6 +1,5 @@
 ﻿using GoodHamburger.Features.Produtos.Dtos;
 using GoodHamburger.Features.Produtos.Interfaces;
-using GoodHamburger.Features.Produtos.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GoodHamburger.Features.Produtos.Api;
@@ -14,6 +13,14 @@ public class ProdutosController : ControllerBase
     public ProdutosController(IProdutoService produtoService)
     {
         _produtoService = produtoService;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ObterTodosProdutos()
+    {
+        var produtos = await _produtoService.ObterTodosProdutos();
+        
+        return Ok(produtos);
     }
 
     [HttpPost]
