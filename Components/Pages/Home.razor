@@ -1,68 +1,241 @@
-﻿@page "/"
+﻿  @page "/"
 
-@using GoodHamburger.Features.Produtos.Dtos
-@inject HttpClient Http
+  @using System.Text.Json
+  @using System.Text.Json.Serialization
+  @using GoodHamburger.Features.Produtos.Dtos
+  @using GoodHamburger.Features.Produtos.Models
+  @inject HttpClient Http
 
-    <PageTitle>Cardápio</PageTitle>
+  <PageTitle>Cardápio</PageTitle>
 
-    <h1>Cardápio</h1>
+  <h1>Cardápio</h1>
 
+  @if (sucesso != null)
+  {
+      <div class="alert alert-success">@sucesso</div>
+  }
 
-    @if (!carregado)
-    {
-        <div class="d-flex justify-content-center mt-4">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">Carregando...</span>
-            </div>
-        </div>
-    }
-    else if (produtos == null || !produtos.Any())
-    {
-        <p>Nenhum produto encontrado.</p>
-    }
-    else
-    {
-        <table class="table">
-            <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Preço</th>
-                <th>Categoria</th>
-            </tr>
-            </thead>
-            <tbody>
-            @foreach (var produto in produtos)
-            {
-                <tr>
-                    <td>@produto.Nome</td>
-                    <td>@produto.Preco.ToString("C")</td>
-                    <td>@produto.TipoProduto</td>
-                </tr>
-            }
-            </tbody>
-        </table>
-    }
+  @if (erro != null)
+  {
+      <div class="alert alert-danger">@erro</div>
+  }
 
-    @code
-    {
-        private List<ProdutoDto>? produtos = new();
-        private bool carregado;
-        private string? erro;
+  @if (!carregado)
+  {
+      <div class="d-flex justify-content-center mt-4">
+          <div class="spinner-border"></div>
+      </div>
+  }
+  else if (produtos == null || !produtos.Any())
+  {
+      <p>Nenhum produto encontrado.</p>
+  }
+  else
+  {
+      <table class="table">
+          <thead>
+          <tr>
+              <th>Id</th>
+              <th>Nome</th>
+              <th>Preço</th>
+              <th>Categoria</th>
+              <th>Ação</th>
+          </tr>
+          </thead>
+          <tbody>
+          @foreach (var produto in produtos)
+          {
+              <tr class="@ObterClasseLinha(produto)">
+                  <td>@produto.Id</td>
+                  <td>@produto.Nome</td>
+                  <td>@produto.Preco.ToString("C")</td>
+                  <td>@produto.TipoProduto</td>
+                  <td>
+                      <button class="@(EstaSelecionado(produto) ? "btn btn-success" : "btn btn-primary")"
+                              @onclick="@(() => { Console.WriteLine($"Clicou no {produto.Nome} (tipo={produto.TipoProduto})");
+                                            SelecionarProduto(produto); })"
+                              disabled="@EstaDesabilitado(produto)">
+                          @(EstaSelecionado(produto) ? "Selecionado" : "Selecionar")
+                      </button>
 
+                  </td>
+              </tr>
+          }
+          </tbody>
+      </table>
 
-        protected override async Task OnInitializedAsync()
-        {
-            try
-            {
-                produtos = await Http.GetFromJsonAsync<List<ProdutoDto>>("http://localhost:5097/produtos");
-            }
-            catch (Exception ex)
-            {
-                erro = ex.Message;
-            }
-            finally
-            {
-                carregado = true;
-            }
-        }
-    }
+      <div class="mt-4">
+          <p>
+              <small>
+                  Sanduíche: @(sanduicheSelecionado?.Nome ?? "nenhum") |
+                  Acompanhamentos: @acompanhamentosSelecionados.Count |
+                  PodeFinalizar: @PodeFinalizar
+              </small>
+          </p>
+
+          <button class="btn btn-success"
+                  @onclick="FinalizarPedido"
+                  disabled="@(!PodeFinalizar)">
+              @(enviandoPedido ? "Enviando..." : "Finalizar Pedido")
+          </button>
+      </div>
+  }
+
+  @code
+  {
+      private static readonly JsonSerializerOptions JsonOptions = new()
+      {
+          PropertyNameCaseInsensitive = true,
+          Converters = { new JsonStringEnumConverter() }
+      };
+      
+      bool PodeFinalizar =>
+          !enviandoPedido &&
+          (sanduicheSelecionado != null || acompanhamentosSelecionados.Any());
+
+      private List<ProdutoDto>? produtos;
+      private bool carregado;
+      private string? erro;
+      private string? sucesso;
+
+      private ProdutoDto? sanduicheSelecionado;
+      private List<ProdutoDto> acompanhamentosSelecionados = new();
+
+      private bool enviandoPedido;
+
+      protected override async Task OnInitializedAsync()
+      {
+          try
+          {
+              produtos = await Http.GetFromJsonAsync<List<ProdutoDto>>(
+                  "http://localhost:5097/produtos",
+                  JsonOptions);
+          }
+          catch (Exception ex)
+          {
+              erro = ex.Message;
+          }
+          finally
+          {
+              carregado = true;
+          }
+      }
+
+      void SelecionarProduto(ProdutoDto produto)
+      {
+          if (produto.TipoProduto == TipoProduto.Sanduiche)
+          {
+              sanduicheSelecionado = produto;
+          }
+          else if (produto.TipoProduto == TipoProduto.Acompanhamento)
+          {
+              var existente = acompanhamentosSelecionados
+                  .FirstOrDefault(a => a.Id == produto.Id);
+
+              if (existente != null)
+              {
+                  acompanhamentosSelecionados.Remove(existente);
+              }
+              else
+              {
+                  if (acompanhamentosSelecionados.Count < 2)
+                      acompanhamentosSelecionados.Add(produto);
+              }
+          }
+      }
+
+      bool EstaSelecionado(ProdutoDto produto)
+      {
+          Console.WriteLine(produto);
+          if (produto.TipoProduto == TipoProduto.Sanduiche)
+          {
+              return sanduicheSelecionado?.Id == produto.Id;
+          }
+
+          if (produto.TipoProduto == TipoProduto.Acompanhamento)
+          {
+              return acompanhamentosSelecionados.Any(a => a.Id == produto.Id);
+          }
+
+          return false;
+      }
+
+      bool EstaDesabilitado(ProdutoDto produto)
+      {
+          if (produto.TipoProduto == TipoProduto.Sanduiche)
+          {
+              return sanduicheSelecionado != null && sanduicheSelecionado.Id != produto.Id;
+          }
+
+          if (produto.TipoProduto == TipoProduto.Acompanhamento)
+          {
+              return acompanhamentosSelecionados.Count >= 2 &&
+                     !acompanhamentosSelecionados.Any(a => a.Id == produto.Id);
+          }
+
+          return false;
+      }
+
+      string ObterClasseLinha(ProdutoDto produto)
+      {
+          if (EstaSelecionado(produto))
+          {
+              return "table-success";
+          }
+
+          return string.Empty;
+      }
+
+      async Task FinalizarPedido()
+      {
+          enviandoPedido = true;
+          sucesso = null;
+          erro = null;
+
+          try
+          {
+              var produtosSelecionados = new List<int>();
+
+              if (sanduicheSelecionado != null)
+                  produtosSelecionados.Add(sanduicheSelecionado.Id);
+
+              produtosSelecionados.AddRange(acompanhamentosSelecionados.Select(a => a.Id));
+
+              if (!produtosSelecionados.Any())
+              {
+                  erro = "Selecione ao menos um produto.";
+                  return;
+              }
+
+              var dto = new
+              {
+                  ProdutoIds = produtosSelecionados
+              };
+
+              var response = await Http.PostAsJsonAsync(
+                  "http://localhost:5097/pedidos",
+                  dto,
+                  JsonOptions);
+
+              if (response.IsSuccessStatusCode)
+              {
+                  sucesso = "Pedido realizado com sucesso! 🎉";
+
+                  sanduicheSelecionado = null;
+                  acompanhamentosSelecionados.Clear();
+              }
+              else
+              {
+                  erro = "Erro ao criar pedido.";
+              }
+          }
+          catch (Exception ex)
+          {
+              erro = ex.Message;
+          }
+          finally
+          {
+              enviandoPedido = false;
+          }
+      }
+  }
