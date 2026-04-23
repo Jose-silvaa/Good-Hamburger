@@ -27,7 +27,6 @@ public class ProdutosController : ControllerBase
     public async Task<ActionResult> CriarProduto([FromBody] CriarProdutoDto produtoDto)
     {
         await _produtoService.CriarProduto(produtoDto);
-        
         return Created();
     }
 }   

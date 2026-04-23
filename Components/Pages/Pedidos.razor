@@ -1,0 +1,70 @@
+﻿@page "/pedidos-realizados"
+@using GoodHamburger.Features.Pedido.Dtos
+
+@inject HttpClient Http
+
+<PageTitle>Pedidos</PageTitle>
+
+<h1>Pedidos Realizados</h1>
+
+
+@if (!carregado)
+{
+    <div class="d-flex justify-content-center mt-4">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Carregando...</span>
+        </div>
+    </div>
+}
+else if (pedidos == null || !pedidos.Any())
+{
+    <p>Nenhum pedido feito.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Id</th>
+            <th>Sanduiche</th>
+            <th>Acompanhamentos</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var pedido in pedidos)
+        {
+            <tr>
+                <td>@pedido.Id</td>
+                <td>@(pedido.Sanduiche ?? "Nenhum")</td>
+                <td>@(pedido.Acompanhamentos != null ? string.Join(", ", pedido.Acompanhamentos) : "Nenhum")</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+
+    @code
+    {
+        private List<PedidoDto>? pedidos = new();
+        private bool carregado;
+        private string? erro;
+
+        
+        protected override async Task OnInitializedAsync()
+        {
+            try
+            {
+                pedidos = await Http.GetFromJsonAsync<List<PedidoDto>>("http://localhost:5097/pedido");
+            }
+            catch (Exception ex)
+            {
+                erro = ex.Message;
+            }
+            finally
+            {
+                carregado = true;
+            }
+        }
+
+    }

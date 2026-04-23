@@ -40,4 +40,14 @@ public class ProdutoService : IProdutoService
             ))
             .ToListAsync();
     }
+
+    public async Task<IEnumerable<Produto>> ObterProdutosPorIds(IReadOnlyList<int>? produtoIds)
+    {
+        if (produtoIds == null || !produtoIds.Any())
+            return [];
+        
+        return await _context.Produtos
+            .Where(p => produtoIds.Contains(p.Id))
+            .ToListAsync();
+    }
 }

@@ -26,15 +26,12 @@ public class AppDbContext : DbContext
                 .HasForeignKey(p => p.SanduicheId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            e.HasOne(p => p.Acompanhamento)
-                .WithMany()
-                .HasForeignKey(p => p.AcompanhamentoId)
-                .OnDelete(DeleteBehavior.Restrict);
+            e.HasMany(p => p.Acompanhamentos)
+                .WithMany();
 
-            e.HasOne(p => p.Bebida)
-                .WithMany()
-                .HasForeignKey(p => p.BebidaId)
-                .OnDelete(DeleteBehavior.Restrict);
+            e.Navigation(p => p.Acompanhamentos)
+                .HasField("_acompanhamentos")
+                .UsePropertyAccessMode(PropertyAccessMode.Field);
 
         });
     }

@@ -1,5 +1,7 @@
 using GoodHamburger.Components;
 using GoodHamburger.Data;
+using GoodHamburger.Features.Pedido.Interfaces;
+using GoodHamburger.Features.Pedido.Services;
 using GoodHamburger.Features.Produtos.Interfaces;
 using GoodHamburger.Features.Produtos.Services;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IProdutoService, ProdutoService>();
+builder.Services.AddScoped<IPedidoService, PedidoService>();
 builder.Services.AddControllers();  
 // Add services to the container.
 builder.Services.AddRazorComponents()

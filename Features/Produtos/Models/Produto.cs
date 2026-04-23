@@ -10,6 +10,6 @@ public class Produto
 
 public enum TipoProduto
 {
-    Sanduiche,
-    Acompanhamento,
+    Sanduiche = 0,
+    Acompanhamento = 1
 }
