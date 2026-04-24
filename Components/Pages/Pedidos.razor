@@ -1,5 +1,9 @@
-﻿@page "/pedidos-realizados"
+﻿@rendermode InteractiveServer
+
+@page "/pedidos-realizados"
 @using GoodHamburger.Features.Pedido.Dtos
+@using GoodHamburger.Features.Produtos.Dtos
+@using GoodHamburger.Features.Produtos.Models
 
 @inject HttpClient Http
 
@@ -7,18 +11,13 @@
 
 <h1>Pedidos Realizados</h1>
 
-
 @if (!carregado)
 {
-    <div class="d-flex justify-content-center mt-4">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden">Carregando...</span>
-        </div>
-    </div>
+    <div class="spinner-border"></div>
 }
 else if (pedidos == null || !pedidos.Any())
 {
-    <p>Nenhum pedido feito.</p>
+    <p>Nenhum pedido.</p>
 }
 else
 {
@@ -26,8 +25,11 @@ else
         <thead>
         <tr>
             <th>Id</th>
-            <th>Sanduiche</th>
+            <th>Sanduíche</th>
             <th>Acompanhamentos</th>
+            <th>SubTotal</th>
+            <th>Total</th>
+            <th>Editar</th>
         </tr>
         </thead>
         <tbody>
@@ -35,36 +37,143 @@ else
         {
             <tr>
                 <td>@pedido.Id</td>
-                <td>@(pedido.Sanduiche ?? "Nenhum")</td>
-                <td>@(pedido.Acompanhamentos != null ? string.Join(", ", pedido.Acompanhamentos) : "Nenhum")</td>
+                <td>@pedido.Sanduiche</td>
+                <td>@string.Join(", ", pedido.Acompanhamentos ?? new())</td>
+                <td>@pedido.SubTotal.ToString("F2")</td>
+                <td>@pedido.Total.ToString("F2")</td>
+                <td>
+                    <button class="btn btn-primary btn-sm"
+                            @onclick="() => IniciarEdicao(pedido)">
+                        Editar
+                    </button>
+                </td>
             </tr>
+
+            @if (pedidoEditando?.Id == pedido.Id)
+            {
+                <tr>
+                    <td colspan="5">
+
+                        <h5>🥪 Sanduíche</h5>
+                        <div class="d-flex gap-2 flex-wrap">
+                            @foreach (var s in sanduiches)
+                            {
+                                <button class="@ClasseSanduiche(s)"
+                                        @onclick="() => SelecionarSanduiche(s)">
+                                    @s.Nome
+                                </button>
+                            }
+                        </div>
+
+                        <h5 class="mt-3">🍟 Acompanhamentos</h5>
+                        <div class="d-flex gap-2 flex-wrap">
+                            @foreach (var a in acompanhamentos)
+                            {
+                                <button class="@ClasseAcompanhamento(a)"
+                                        @onclick="() => ToggleAcompanhamento(a)">
+                                    @a.Nome
+                                </button>
+                            }
+                        </div>
+
+                        <div class="mt-3">
+                            <button class="btn btn-success me-2"
+                                    @onclick="SalvarEdicao">
+                                Salvar
+                            </button>
+                            
+                        </div>
+
+                    </td>
+                </tr>
+            }
         }
         </tbody>
     </table>
 }
 
+@code {
+    private List<PedidoDto>? pedidos;
+    private List<ProdutoDto> produtos = new();
 
-    @code
+    private List<ProdutoDto> sanduiches = new();
+    private List<ProdutoDto> acompanhamentos = new();
+
+    private PedidoDto? pedidoEditando;
+
+    private int? sanduicheSelecionadoId;
+    private HashSet<int> acompanhamentosSelecionados = new();
+
+    private bool carregado;
+
+    protected override async Task OnInitializedAsync()
     {
-        private List<PedidoDto>? pedidos = new();
-        private bool carregado;
-        private string? erro;
-
-        
-        protected override async Task OnInitializedAsync()
-        {
-            try
-            {
-                pedidos = await Http.GetFromJsonAsync<List<PedidoDto>>("http://localhost:5097/pedido");
-            }
-            catch (Exception ex)
-            {
-                erro = ex.Message;
-            }
-            finally
-            {
-                carregado = true;
-            }
-        }
-
+        await CarregarDados();
+        carregado = true;
     }
+
+    async Task CarregarDados()
+    {
+        pedidos = await Http.GetFromJsonAsync<List<PedidoDto>>("http://localhost:5097/pedido");
+
+        produtos = await Http.GetFromJsonAsync<List<ProdutoDto>>("http://localhost:5097/produtos");
+
+        sanduiches = produtos.Where(p => p.TipoProduto == TipoProduto.Sanduiche).ToList();
+        acompanhamentos = produtos.Where(p => p.TipoProduto == TipoProduto.Acompanhamento).ToList();
+    }
+
+    void IniciarEdicao(PedidoDto pedido)
+    {
+        pedidoEditando = pedido;
+        
+        sanduicheSelecionadoId = null;
+        acompanhamentosSelecionados.Clear();
+        
+        pedido.Acompanhamentos.Clear();
+    }
+
+    void SelecionarSanduiche(ProdutoDto produto)
+    {
+        sanduicheSelecionadoId = produto.Id;
+    }
+
+    void ToggleAcompanhamento(ProdutoDto produto)
+    {
+        if (!acompanhamentosSelecionados.Add(produto.Id))
+            acompanhamentosSelecionados.Remove(produto.Id);
+    }
+
+    string ClasseSanduiche(ProdutoDto p)
+        => p.Id == sanduicheSelecionadoId
+            ? "btn btn-success"
+            : "btn btn-outline-primary";
+
+    string ClasseAcompanhamento(ProdutoDto p)
+        => acompanhamentosSelecionados.Contains(p.Id)
+            ? "btn btn-success"
+            : "btn btn-outline-secondary";
+
+    async Task SalvarEdicao()
+    {
+        if (pedidoEditando == null) return;
+
+        var adicionar = new List<int>();
+        var remover = new List<int>();
+
+        if (sanduicheSelecionadoId.HasValue)
+            adicionar.Add(sanduicheSelecionadoId.Value);
+
+        adicionar.AddRange(acompanhamentosSelecionados);
+
+        var dto = new AtualizarPedidoDto(adicionar, remover);
+
+        var response = await Http.PutAsJsonAsync(
+            $"http://localhost:5097/pedido/{pedidoEditando.Id}", dto);
+
+        if (response.IsSuccessStatusCode)
+        {
+            pedidoEditando = null;
+            await CarregarDados();
+        }
+    }
+}

@@ -1,9 +1,12 @@
-﻿  @page "/"
+﻿@rendermode InteractiveServer
 
+@page "/"
+  
   @using System.Text.Json
   @using System.Text.Json.Serialization
   @using GoodHamburger.Features.Produtos.Dtos
   @using GoodHamburger.Features.Produtos.Models
+  
   @inject HttpClient Http
 
   <PageTitle>Cardápio</PageTitle>
@@ -51,11 +54,10 @@
                   <td>@produto.Preco.ToString("C")</td>
                   <td>@produto.TipoProduto</td>
                   <td>
-                      <button class="@(EstaSelecionado(produto) ? "btn btn-success" : "btn btn-primary")"
-                              @onclick="@(() => { Console.WriteLine($"Clicou no {produto.Nome} (tipo={produto.TipoProduto})");
-                                            SelecionarProduto(produto); })"
+                      <button class="@ObterClasseBotao(produto)"
+                              @onclick="() => Selecionar(produto)"
                               disabled="@EstaDesabilitado(produto)">
-                          @(EstaSelecionado(produto) ? "Selecionado" : "Selecionar")
+                          @ObterTextoBotao(produto)
                       </button>
 
                   </td>
@@ -65,14 +67,6 @@
       </table>
 
       <div class="mt-4">
-          <p>
-              <small>
-                  Sanduíche: @(sanduicheSelecionado?.Nome ?? "nenhum") |
-                  Acompanhamentos: @acompanhamentosSelecionados.Count |
-                  PodeFinalizar: @PodeFinalizar
-              </small>
-          </p>
-
           <button class="btn btn-success"
                   @onclick="FinalizarPedido"
                   disabled="@(!PodeFinalizar)">
@@ -125,7 +119,14 @@
       {
           if (produto.TipoProduto == TipoProduto.Sanduiche)
           {
-              sanduicheSelecionado = produto;
+              if (sanduicheSelecionado?.Id == produto.Id)
+              {
+                  sanduicheSelecionado = null; // desseleciona
+              }
+              else
+              {
+                  sanduicheSelecionado = produto; // seleciona outro
+              }
           }
           else if (produto.TipoProduto == TipoProduto.Acompanhamento)
           {
@@ -146,7 +147,6 @@
 
       bool EstaSelecionado(ProdutoDto produto)
       {
-          Console.WriteLine(produto);
           if (produto.TipoProduto == TipoProduto.Sanduiche)
           {
               return sanduicheSelecionado?.Id == produto.Id;
@@ -213,7 +213,7 @@
               };
 
               var response = await Http.PostAsJsonAsync(
-                  "http://localhost:5097/pedidos",
+                  "http://localhost:5097/pedido",
                   dto,
                   JsonOptions);
 
@@ -238,4 +238,29 @@
               enviandoPedido = false;
           }
       }
+      
+      void Selecionar(ProdutoDto produto)
+      {
+          Console.WriteLine($"Clicou no {produto.Nome} (tipo={produto.TipoProduto})");
+          SelecionarProduto(produto);
+      }
+
+      string ObterClasseBotao(ProdutoDto produto)
+      {
+          var baseClasse = "btn btn-sm";
+
+          if (EstaSelecionado(produto))
+              return $"{baseClasse} btn-success";
+
+          return $"{baseClasse} btn-outline-primary";
+      }
+
+      string ObterTextoBotao(ProdutoDto produto)
+      {
+          return EstaSelecionado(produto)
+              ? "Selecionado ✓"
+              : "Selecionar";
+      }
   }
+  
+  

@@ -22,6 +22,11 @@ builder.Services.AddHttpClient("Api", c =>
     c.BaseAddress = new Uri("https://localhost:5097"); 
 });
 
+builder.Services.AddSwaggerGen(c =>
+{
+    c.EnableAnnotations();
+});
+
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
     p.WithOrigins("http://localhost:5097")
         .AllowAnyHeader()

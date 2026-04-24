@@ -1,7 +1,11 @@
-﻿namespace GoodHamburger.Shared;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace GoodHamburger.Shared;
 
 public class Result<T>
 {
+    [MemberNotNullWhen(true, nameof(Data))]
+    [MemberNotNullWhen(false, nameof(Message))]
     public bool Success { get; set; } 
     public string? Message { get; set; } 
     public T? Data { get; set; }

@@ -9,4 +9,16 @@ public record CriarPedidoDto(
      IReadOnlyList<int> ProdutoIds
     );
     
-    public record PedidoDto(int Id, string? Sanduiche, List<string> Acompanhamentos);
+    public record PedidoDto(
+        int Id, string? Sanduiche, 
+        List<string> Acompanhamentos, 
+        decimal SubTotal, 
+        decimal Total
+    );
+
+    public record AtualizarPedidoDto(
+        List<int>? ProdutoIdsParaAdicionar,
+        List<int>? ProdutoIdsParaRemover
+    );
+    
+    
