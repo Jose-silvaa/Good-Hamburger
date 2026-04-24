@@ -102,7 +102,7 @@
           try
           {
               produtos = await Http.GetFromJsonAsync<List<ProdutoDto>>(
-                  "http://localhost:5097/produtos",
+                  "https://good-hamburger-5-0.onrender.com/produtos",
                   JsonOptions);
           }
           catch (Exception ex)
@@ -213,7 +213,7 @@
               };
 
               var response = await Http.PostAsJsonAsync(
-                  "http://localhost:5097/pedido",
+                  "https://good-hamburger-5-0.onrender.com/pedido",
                   dto,
                   JsonOptions);
 

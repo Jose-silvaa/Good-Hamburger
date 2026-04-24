@@ -114,9 +114,9 @@ else
 
     async Task CarregarDados()
     {
-        pedidos = await Http.GetFromJsonAsync<List<PedidoDto>>("http://localhost:5097/pedido");
+        pedidos = await Http.GetFromJsonAsync<List<PedidoDto>>("https://good-hamburger-5-0.onrender.com/pedido");
 
-        produtos = await Http.GetFromJsonAsync<List<ProdutoDto>>("http://localhost:5097/produtos");
+        produtos = await Http.GetFromJsonAsync<List<ProdutoDto>>("https://good-hamburger-5-0.onrender.com/produtos");
 
         sanduiches = produtos.Where(p => p.TipoProduto == TipoProduto.Sanduiche).ToList();
         acompanhamentos = produtos.Where(p => p.TipoProduto == TipoProduto.Acompanhamento).ToList();
@@ -168,7 +168,7 @@ else
         var dto = new AtualizarPedidoDto(adicionar, remover);
 
         var response = await Http.PutAsJsonAsync(
-            $"http://localhost:5097/pedido/{pedidoEditando.Id}", dto);
+            $"https://good-hamburger-5-0.onrender.com/pedido/{pedidoEditando.Id}", dto);
 
         if (response.IsSuccessStatusCode)
         {

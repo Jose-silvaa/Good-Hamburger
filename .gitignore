@@ -77,3 +77,5 @@ docker-compose.override.yml
 *.db
 *.db-shm
 *.db-wal
+
+prod.env

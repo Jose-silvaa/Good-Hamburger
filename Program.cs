@@ -19,7 +19,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddHttpClient("Api", c =>
 {
-    c.BaseAddress = new Uri("https://localhost:5097"); 
+    c.BaseAddress = new Uri("https://localhost:8080"); 
 });
 
 builder.Services.AddSwaggerGen(c =>
@@ -28,7 +28,7 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
-    p.WithOrigins("http://localhost:5097")
+    p.WithOrigins("http://localhost:8080")
         .AllowAnyHeader()
         .AllowAnyMethod()));
 
